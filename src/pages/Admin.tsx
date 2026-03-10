@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import api from "@/services/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,6 +182,7 @@ const LoginScreen = ({ onLogin }: { onLogin: (token: string) => void }) => {
 
 const Admin = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [token, setToken] = useState<string | null>(localStorage.getItem("admin_token"));
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -283,8 +285,11 @@ const Admin = () => {
               </SelectContent>
             </Select>
           </div>
-          <Button onClick={performDraw} className="bg-primary text-primary-foreground hover:bg-primary/90 font-display tracking-wider shadow-glow">
-            <Trophy className="h-4 w-4 mr-2" /> TIRAGE AU SORT
+          <Button
+            onClick={() => navigate("/draw")}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 font-display tracking-wider shadow-glow animate-pulse px-6 py-3 text-base"
+          >
+            <Trophy className="h-5 w-5 mr-2" /> COMMENCER LE TIRAGE AU SORT
           </Button>
         </div>
 
