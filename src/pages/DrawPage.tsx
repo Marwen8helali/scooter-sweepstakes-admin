@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useNavigate } from "react-router-dom";
@@ -214,27 +214,37 @@ const LeaguePhase = ({
     { label: "Groupe C", color: "border-green-500/50 bg-green-500/5", glow: "shadow-[0_0_20px_rgba(34,197,94,0.3)]" },
   ];
 
-  const shuffled = shuffle(qualified);
-  const split = [shuffled.slice(0, 4), shuffled.slice(4, 7), shuffled.slice(7, 10)];
+  // Computed once — avoids re-shuffling on every state update
+  const split = useMemo(() => {
+    const s = shuffle(qualified);
+    return [s.slice(0, 4), s.slice(4, 7), s.slice(7, 10)];
+  }, [qualified]);
 
   const [winners, setWinners] = useState<(Participant | null)[]>([null, null, null]);
   const [drawing, setDrawing] = useState<number | null>(null);
   const [displayMap, setDisplayMap] = useState<(Participant | null)[]>([null, null, null]);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current); }, []);
 
   const drawGroup = (gi: number) => {
+    if (drawing !== null) return;
     setDrawing(gi);
     let ticks = 0;
     const maxTicks = 30 + Math.floor(Math.random() * 20);
-    const interval = setInterval(() => {
+    // Capture the group slice once — stable reference inside the interval
+    const group = split[gi];
+    intervalRef.current = setInterval(() => {
       setDisplayMap((prev) => {
         const next = [...prev];
-        next[gi] = split[gi][Math.floor(Math.random() * split[gi].length)];
+        next[gi] = group[Math.floor(Math.random() * group.length)];
         return next;
       });
       ticks++;
       if (ticks >= maxTicks) {
-        clearInterval(interval);
-        const w = split[gi][Math.floor(Math.random() * split[gi].length)];
+        clearInterval(intervalRef.current!);
+        intervalRef.current = null;
+        const w = group[Math.floor(Math.random() * group.length)];
         setWinners((prev) => { const n = [...prev]; n[gi] = w; return n; });
         setDisplayMap((prev) => { const n = [...prev]; n[gi] = w; return n; });
         setDrawing(null);
